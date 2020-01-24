@@ -69,24 +69,23 @@ ClassMethod Parse(literal As %String) As Speed.Base
     set b = [1, -1, 0, 2, 0, 0, 0]
     #; zw a, b
 
-    #; w a = b, !
-    #; Write *27,*91,1,*59,1,*72
-    #; Set $X = 0
-    #; Set $Y = 0
-    #; w "###", !
-    #; Set $X = 0
-    #; Set $Y = 0
-    #; w "#1#", !
-    #; set unit = $case(unit,
-    #;     "J": "kg*m^2/s^2",
-    #;     "Pa": "kg/m*s^2",
-    #;     "W": "kg*m^2/s^3",
-    #;     : " "
-    #; )
+    set unit = "J"
+    set unitNorm = $case(unit,
+        "J": "kg*m^2/s^2",
+        "Pa": "kg/m*s^2",
+        "W": "kg*m^2/s^3",
+        : ""
+    )
+    w unitNorm, !
 
-    #; if unit = "J" { set unitSI = [2, 1, -2, 0, 0, 0, 0] } // kg*m^2/s^2
-    #; elseif unit = "Pa" { set unitSI = [-1, 1, -2, 0, 0, 0, 0] } // kg/m*s^2
-    #; elseif unit = "W":  { set unitSI = [2, 1, -3, 0, 0, 0, 0] } // kg*m^2/s^3
+    set unitSI = $CASE(unit,
+        "J": [2, 1, -2, 0, 0, 0, 0], // kg*m^2/s^2
+        "Pa": [-1, 1, -2, 0, 0, 0, 0], // kg/m*s^2
+        "W":  [2, 1, -3, 0, 0, 0, 0], // kg*m^2/s^3
+        : []
+    )
+    w unitSI, !
+    zw unitSI
 
     return literal
 }
