@@ -8,16 +8,24 @@ Property literal As %String;
 
 Property value As %Double;
 
-Property unit As array Of %Integer;
+Property unitType As array Of %Integer;
+
+Property unitBaseString As %String;
 
 ClassMethod Run() As %Status
 {
     set literal = "50 km/h"
-    set s1 = ..Parse(literal)
-    w s1
+    #; set s1 = ..ParseAll(literal)
+    #; w s1
+
+    set valueWithUnit = ##class(Speed.Base).%New()
+    set valueWithUnit.literal = "10 km/h"
+
+    w valueWithUnit.literal, !
+    w valueWithUnit.Value() _" "_ valueWithUnit.unitBaseString, !
 }
 
-ClassMethod Parse(literal As %String) As Speed.Base
+ClassMethod ParseAll(literal As %String) As Speed.Base
 {
     w "Parse "_ literal, !
     set parsedList = $lfs(literal, " ")
@@ -90,12 +98,68 @@ ClassMethod Parse(literal As %String) As Speed.Base
     return literal
 }
 
-ClassMethod setValue() As %Status
+Method Value() As %Double
 {
+    if (..value = "") do ..Parse()
+    return ..value
 }
 
-ClassMethod UnknownType() As %Status
+Method Unit() As %String
 {
+    if (..unitBaseString = "") do ..Parse()
+    return ..unitBaseString
+}
+
+Method Parse() As %Status
+{
+    set literalValue = $PIECE(..literal, " ", 1)
+    set value = $DOUBLE(literalValue)
+
+    set literalUnit = $PIECE(..literal, " ", 2)
+    set literalUnitNumerator = $PIECE(literalUnit, "/", 1)
+    set literalUnitDenominator = $PIECE(literalUnit, "/", 2)
+
+    set scale = ..Scale(literalUnitNumerator)
+    set value = value * scale
+    if (scale '= 1) set literalUnitNumerator = $EXTRACT(literalUnitNumerator, 2, *)
+
+    set isExtraLiteral = ..ExtraSIConvert(literalUnitDenominator)
+    if (isExtraLiteral '= literalUnitDenominator) {
+        set literalScale = $PIECE(isExtraLiteral, " ", 1)
+        set scale = $DOUBLE(literalScale)
+        set value = value / scale
+
+        set literalUnit = $PIECE(isExtraLiteral, " ", 2)
+        set literalUnitDenominator = literalUnit
+    }
+
+    set ..unitBaseString = literalUnitNumerator _ "/" _ literalUnitDenominator
+    set ..value = value
+}
+
+Method Scale(literalUnit) As %Integer
+{
+    set scale = $CASE($EXTRACT(literalUnit),
+        "k": 3,
+        "M": 6,
+        "G": 9,
+        "m": -3,
+        "µ": -6,
+        "n": -9,
+        : 0
+    )
+
+    Return 10 ** scale
+}
+
+Method ExtraSIConvert(unit As %String) As %String
+{
+    set extraSIUnit = $case(unit,
+        "h": "3660 s",
+        "min": "60 s",
+        : unit
+    )
+    Return extraSIUnit
 }
 
 ClassMethod Equals(unit1, unit2) As %Status
