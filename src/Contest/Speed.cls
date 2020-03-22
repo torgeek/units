@@ -19,10 +19,13 @@ ClassMethod Run() As %Status
     #; w s1
 
     set valueWithUnit = ##class(Speed.Base).%New()
-    set valueWithUnit.literal = "10 km/h"
+    set valueWithUnit.literal = "3660 km/h"
 
     w valueWithUnit.literal, !
-    w valueWithUnit.Value() _" "_ valueWithUnit.unitBaseString, !
+    w valueWithUnit.ToString(), !
+    w valueWithUnit.ToString("nonSI"), !
+    w valueWithUnit.ToString(, "k"), !
+    zw valueWithUnit.valueWithUnit
 }
 
 ClassMethod ParseAll(literal As %String) As Speed.Base
@@ -108,6 +111,14 @@ Method Unit() As %String
 {
     if (..unitBaseString = "") do ..Parse()
     return ..unitBaseString
+}
+
+Method ToString(format = "SI", scale = "") As %String
+{
+    if ((format = "SI") && (scale = "")) set literal = ..Value() _" "_ ..Unit()
+    if (format = "nonSI") set literal = ..Value()/1609.34 _" mph" 
+    if (scale = "k") set literal = ..Value()/1000 _" "_"k"_..Unit()
+    return literal
 }
 
 Method Parse() As %Status
